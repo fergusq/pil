@@ -14,10 +14,12 @@ class StorC extends Stor {
 		ASSEMBLER = Assembler.C;
 	}
 
+	@Override
 	public String getVar(String name) {
 		return getVarAddr(name);
 	}
 	
+	@Override
 	public String getVarAddr(String name) {
 		if (proceedCompiler.statics.contains(name)) {
 			return "" + proceedCompiler.censor(name) + "";
@@ -38,11 +40,13 @@ class StorC extends Stor {
 		return changeReg(name);
 	}
 	
+	@Override
 	public String getVal(String name) {
 		if (name.startsWith(":")) return getValAddr(name.substring(1));
 		return getValAddr(name);
 	}
 	
+	@Override
 	public String getValAddr(String name) {
 		if (proceedCompiler.constantValues.containsKey(name)) {
 			return getValAddr(proceedCompiler.constantValues.get(name));
@@ -69,6 +73,7 @@ class StorC extends Stor {
 		return changeReg(name);
 	}
 	
+	@Override
 	public String getHalfVarAddr(String name) {
 		if (proceedCompiler.constantValues_r.containsKey(name)) {
 			return getHalfVarAddr(proceedCompiler.constantValues_r.get(name));
@@ -135,11 +140,13 @@ class StorC extends Stor {
 
 	// Instructions
 	
+	@Override
 	public void move(String s, String s1) {
 		if (getVar(s).equals(getVal(s1))) return;
 		out.println("\t" + getVar(s) + " = " + getVal(s1) + ";");
 	}
 	
+	@Override
 	public void mins(String ins, String s, String s1) {
 		switch (ins) {
 		case "add":
@@ -190,10 +197,12 @@ class StorC extends Stor {
 		out.println("\t" + getVar(s) + " = (void*)(((long) " + getVar(s) + ") " + ins + " ((long) " + getVal(s1) + "));");
 	}
 	
+	@Override
 	public void lea(String s, String s1) {
 		out.println("\t" + getVar(s) + " = " + getHalfVarAddr(s1) + ";");
 	}
 	
+	@Override
 	public void push(String s) {
 		out.println("\tpush\t" + getVal(s));
 	}
@@ -201,22 +210,24 @@ class StorC extends Stor {
 	private String cmp1;
 	private String cmp2;
 	
-	public void ins(String ins, String ...args) {
+	@Override
+	public void ins(String ins, String ...arguments) {
 		if (ins.equals("cmp")) {
-			cmp1 = getVal(args[0]);
-			cmp2 = getVal(args[1]);
+			cmp1 = getVal(arguments[0]);
+			cmp2 = getVal(arguments[1]);
 			return;
 		}
 		
 		String a = "";
-		for (int i = 0; i < args.length; i++) {
+		for (int i = 0; i < arguments.length; i++) {
 			if (i != 0) a += ", ";
 			else a += "\t";
-			a += getVal(args[i]);
+			a += getVal(arguments[i]);
 		}
 		out.println("\t" + ins + a);
 	}
 	
+	@Override
 	public void call(String to) {
 		Collections.reverse(newArgs);
 		out.print("\tRegAX = " + getVal(to) + "(");
@@ -227,6 +238,7 @@ class StorC extends Stor {
 		out.println(");");
 	}
 	
+	@Override
 	public void callPtr(String to) {
 		Collections.reverse(newArgs);
 		String type = "void*(*)(";
@@ -243,6 +255,7 @@ class StorC extends Stor {
 		out.println(");");
 	}
 	
+	@Override
 	public void callm(String to, String name) {
 		Collections.reverse(newArgs);
 		out.print("\t" + getVar(to) + " = " + getVal(name) + "(");
@@ -253,6 +266,7 @@ class StorC extends Stor {
 		out.println(");");
 	}
 	
+	@Override
 	public void callPtrm(String to, String name) {
 		Collections.reverse(newArgs);
 		String type = "void*(*)(";
@@ -269,14 +283,17 @@ class StorC extends Stor {
 		out.println(");");
 	}
 	
+	@Override
 	public void label(String name) {
 		out.println("\tL" + proceedCompiler.censor(name) + ":");
 	}
 	
+	@Override
 	public void jump(String to) {
 		out.println("\tgoto\tL" + proceedCompiler.censor(to) + ";");
 	}
 	
+	@Override
 	public void jump(String cond, String to) {
 		switch (cond) {
 		case "l":
@@ -305,18 +322,26 @@ class StorC extends Stor {
 		out.println("\tif ("+cmp1+" " + cond + " "+cmp2+") goto L" + proceedCompiler.censor(to) + ";");
 	}
 	
+	@Override
+	public void pset(String to, String from) {
+		out.println("\t*(" + getVal(to) + ") = " + getVal(from) + ";");
+	};
+	
 	// Functions
 	
 	List<String> newArgs = new ArrayList<>();
 	
+	@Override
 	public void pushArg(int index, String arg) {
 		newArgs.add(getVal(arg));
 	}
 	
+	@Override
 	public void clearArgs(int size) {
 		newArgs.clear();
 	}
 	
+	@Override
 	public void function(String name, boolean varargs) {
 		out.print("void * " + proceedCompiler.censor(name) + "(");
 		for (int i = 0; i < args.size(); i++) {
@@ -336,11 +361,13 @@ class StorC extends Stor {
 		out.println(") {");
 	}
 	
+	@Override
 	public void ret() {
 		out.println("\treturn RegAX;");
 		out.println("}");
 	}
 	
+	@Override
 	public void initStack() {
 		stackInited = true;
 		
@@ -355,6 +382,7 @@ class StorC extends Stor {
 		}
 		return;
 	}
+	@Override
 	public void resetStack() {
 		stackInited = false;
 
@@ -364,7 +392,7 @@ class StorC extends Stor {
 	
 	public static void start(File file, ArrayList<String> types, ArrayList<String[]> complexTypes) {
 		out = ProceedCompiler.out;
-		StorC.types = types;
+		Stor.types = types;
 		
 		out.println();
 		
@@ -434,10 +462,12 @@ class StorC extends Stor {
 	
 	// Comments
 	
+	@Override
 	public void comment(String text) {
 		out.println("\t/* " + text.replace("/*", "/ *").replace("*/", "* /") + " */");
 	}
 	
+	@Override
 	public void space() {
 		out.println();
 	}

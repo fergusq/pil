@@ -75,6 +75,7 @@ public class ProceedCompiler {
 	 * setfield   => s
 	 * operator   => o
 	 * method     => t
+	 * getref     => r
 	 * </pre>
 	 * @param name Sensuroitava nimi
 	 * @return Sensuroitu nimi
@@ -101,8 +102,10 @@ public class ProceedCompiler {
 				
 				if (i != info.length-1) {
 					if (method.equals("setfield")) a += "s";	
-					if (method.equals("operator")) a += "o";
-					if (method.equals("method")) a += "t";
+					else if (method.equals("operator")) a += "o";
+					else if (method.equals("method")) a += "t";
+					else if (method.equals("getref")) a += "r";
+					else a += method;
 					
 					a += viivat + "_" + clazz + "_" + info[++i];
 				}
@@ -609,9 +612,7 @@ public class ProceedCompiler {
 				st.comment("proceed " + t.label + t.args);
 				
 				if (t.label.equals("@") && t.args.size() == 2) { // "set"
-					st.move("oax", t.args.get(0));
-					st.move(Registers.BX, t.args.get(1));
-					st.move("@oax", Registers.BX);
+					st.pset(t.args.get(0), t.args.get(1));
 					break;
 				}
 				if (t.label.equals("@") && t.args.size() == 1) { // "get"

@@ -114,7 +114,7 @@ public class Stor {
 		return getVarAddr(name);
 	}
 	
-	private String changeReg(String substring) {
+	private static String changeReg(String substring) {
 		switch (substring) {
 		case "oax":
 			return Registers.AX;
@@ -163,12 +163,12 @@ public class Stor {
 		out.println("\tpush\t" + getVal(s));
 	}
 	
-	public void ins(String ins, String ...args) {
+	public void ins(String ins, String ...arguments) {
 		String a = "";
-		for (int i = 0; i < args.length; i++) {
+		for (int i = 0; i < arguments.length; i++) {
 			if (i != 0) a += ", ";
 			else a += "\t";
-			a += getVal(args[i]);
+			a += getVal(arguments[i]);
 		}
 		out.println("\t" + ins + a);
 	}
@@ -198,6 +198,12 @@ public class Stor {
 		out.println("\tj" + cond + "\t" + localLabel(to));
 	}
 	
+	public void pset(String to, String from) {
+		move("oax", to);
+		move(Registers.BX, from);
+		move("@oax", Registers.BX);
+	}
+	
 	// Functions
 	
 	public static String currentFunctionName = ":global:";
@@ -209,10 +215,11 @@ public class Stor {
 	}
 	
 	public void clearArgs(int size) {
-		if (!Registers.ARCH.equals("amd64"))
-			mins("sub", Registers.SP, ""+(size*Registers.REGISTER_SIZE));
-		else if (size >= 6)
-			mins("sub", Registers.SP, ""+((size-6)*Registers.REGISTER_SIZE));
+		if (size > 0)
+			if (!Registers.ARCH.equals("amd64"))
+				mins("add", Registers.SP, ""+(size*Registers.REGISTER_SIZE));
+			else if (size >= 6)
+				mins("add", Registers.SP, ""+((size-6)*Registers.REGISTER_SIZE));
 	}
 	
 	public void function(String name, boolean varargs) {
@@ -237,23 +244,22 @@ public class Stor {
 	public void initStack() {
 		stackInited = true;
 		
-		if (vars.size() > 0) {
+		//if (vars.size() > 0) {
 			out.println("	push	" + Registers.BP + "\n"+
 						"	mov	" + Registers.BP + ", " + Registers.SP + "");
 		
 			out.println("	sub	" + Registers.SP + ", " + vars.size()*Registers.REGISTER_SIZE);
-		}
-		if (!Registers.ARCH.equals("amd64")) out.println("	push	" + Registers.DX + "");
+		//}
+		//else if (!Registers.ARCH.equals("amd64")) out.println("	push	" + Registers.BX + "");
 	}
 	public void resetStack() {
 		stackInited = false;
 		
 		
-		if (!Registers.ARCH.equals("amd64")) out.println("	pop	" + Registers.DX + "");
-		
-		if (vars.size() > 0) out.println(
+		/*if (vars.size() > 0)*/ out.println(
 				"	mov	" + Registers.SP + ", " + Registers.BP + "\n"+
 				"	pop	" + Registers.BP + "");
+		//else if (!Registers.ARCH.equals("amd64")) out.println("	pop	" + Registers.BX + "");
 	}
 	
 	// Comments
